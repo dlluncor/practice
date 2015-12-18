@@ -14,11 +14,9 @@ def s3open(*args, **kwargs):
 
 class S3File(object):
 
-    def __init__(self, url, key=None, secret=None, expiration_days=0, private=False, content_type=None, create=True):
-        from boto.s3.connection import S3Connection
-        from boto.s3.key import Key
+    def __init__(self, path, access_key=None, access_secret=None, bucket=None, expiration_days=0, private=False, content_type=None, create=True):
+        import boto
 
-        self.url = urlparse(url)
         self.expiration_days = expiration_days
         self.buffer = cStringIO.StringIO()
 
@@ -26,23 +24,13 @@ class S3File(object):
         self.closed = False
         self._readreq = True
         self._writereq = False
-        self.content_type = content_type or mimetypes.guess_type(self.url.path)[0]
+        self.content_type = content_type or mimetypes.guess_type(path)[0]
 
-        bucket = self.url.netloc
-        if bucket.endswith('.s3.amazonaws.com'):
-            bucket = bucket[:-17]
+        self.con = boto.connect_s3(
+            aws_access_key_id=access_key, aws_secret_access_key=access_secret)
+        self.bucket = self.con.get_bucket(bucket)
 
-        self.client = S3Connection(key, secret)
-
-        self.name = "s3://" + bucket + self.url.path
-
-        if create:
-            self.bucket = self.client.create_bucket(bucket)
-        else:
-            self.bucket = self.client.get_bucket(bucket, validate=False)
-
-        self.key = Key(self.bucket)
-        self.key.key = self.url.path.lstrip("/")
+        self.key = self.bucket.get_key(path)
         self.buffer.truncate(0)
 
     def __enter__(self):
