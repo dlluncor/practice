@@ -1,4 +1,5 @@
 import sys
+import enchant
 
 letter_val_d = dict(
   a=1,
@@ -29,10 +30,10 @@ letter_val_d = dict(
   z=10
 )
 
-valid_words = set(['fade', 'ade'])
+word_checker = enchant.Dict("en_US")
 
 def is_word(word):
-  return word in valid_words
+  return word_checker.check(word.lower())
 
 class Node(object):
 
