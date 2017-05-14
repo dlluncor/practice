@@ -51,7 +51,9 @@ class Checker(object):
 color_to_boost = {
   '': '',
   'b': '2l',
-  'r': '2w'
+  'r': '2w',
+  'g': '3l',
+  'y': '3w'
 }
 
 class Node(object):
