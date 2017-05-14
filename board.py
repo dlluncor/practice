@@ -196,10 +196,26 @@ class BoggleBoard(object):
 
     print('Found {0} words'.format(len(word_vals)))
 
-    for word, val in word_vals:
-      print('{0} {1}'.format(word, val))
+    words_list = []
+    total = 0
+    i = 0
+    top_100 = 0
 
-    #self._add_to_paths(paths)
+    for word, val in word_vals:
+      total += val
+      words_list.append('{0} {1}'.format(word, val))
+      
+      if i > 100:
+        continue
+      
+      top_100 = total
+      i += 1
+
+    print('Top 100 words: {0} points'.format(top_100))
+    print('Total possible: {0} points'.format(total))
+    print('')
+    print('\n'.join(words_list))
+
 
   def set_checker(self, checker):
     self._checker = checker
