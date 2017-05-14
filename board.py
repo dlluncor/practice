@@ -1,53 +1,66 @@
 import sys
 import enchant
+import trie
+import time
+from nltk.corpus import words
 
 letter_val_d = dict(
-  a=1,
-  b=2,
-  c=3,
-  d=2,
-  e=1,
-  f=4,
-  g=3,
-  h=4,
-  i=1,
-  j=5,
-  k=5,
-  l=2,
-  m=3,
-  n=2,
-  o=2,
-  p=3,
-  q=10,
-  r=1,
-  s=1,
-  t=2,
-  u=2,
-  v=5,
-  w=5,
-  x=8,
-  y=5,
-  z=10
+  a=1, #
+  b=4, #
+  c=4, #
+  d=2, #
+  e=1, #
+  f=4, #
+  g=3, #
+  h=3, #
+  i=1, #
+  j=10, #
+  k=5, #
+  l=2, #
+  m=4, #
+  n=2, #
+  o=1, #
+  p=4, #
+qu=10, #
+  r=1, #
+  s=1, #
+  t=1, #
+  u=2, #
+  v=5, #
+  w=4, #
+  x=8, #
+  y=3, #
+  z=10 #
 )
 
-word_checker = enchant.Dict("en_US")
+class Checker(object):
 
-def is_word(word):
-  return word_checker.check(word.lower())
+  def __init__(self):
+    self._trie = trie.Trie()
+
+  def load_from_words(self, words_list):
+    for word in words_list:
+      self._trie.insert(word.lower())
+
+  def is_prefix(self, word):
+    return self._trie.startsWith(word.lower())
+
+  def is_word(self, word):
+    return self._trie.search(word.lower())
 
 class Node(object):
 
   def __init__(self, letter, boost, x_pos, y_pos):
     self._letter = letter
     self._boost = boost
-    self._x = x_pos
-    self._y = y_pos
+    self.x = x_pos
+    self.y = y_pos
     self._letter_val = letter_val_d[letter]
 
   def get_letter(self):
     return self._letter
 
-  def add_value(self, cur_val):
+  def get_value(self):
     b = self._boost
     word_mult = 1
     letter_mult = 1
@@ -61,52 +74,208 @@ class Node(object):
     elif b == '3l':
       letter_mult = 3
 
-    return (cur_val + (self._letter_val * letter_mult)) * word_mult
+    return self._letter_val * letter_mult, word_mult
 
   def __str__(self):
     return '{0} - {1}. ({2}, {3})'.format(
-        self._letter, self._boost, self._x, self._y)
+        self._letter, self._boost, self.x, self.y)
+
+len_add = {
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 3,
+    6: 6,
+    7: 10,
+    8: 15,
+    9: 20,
+    10: 25
+}
 
 class Path(object):
 
-  def __init__(self, indices):
-    self._indices = indices
+  def __init__(self, nodes):
+    self._nodes = nodes
 
-  def get_value(self, nodes_2d):
+  def add_node(self, node):
+    self._nodes.append(node)
+
+  def first(self):
+    return self._nodes[0]
+
+  def last_node(self):
+    return self._nodes[-1]
+
+  def copy(self):
+    return Path(list(self._nodes))
+
+  def as_word(self):
+    s = ''
+    for node in self._nodes:
+      s += node.get_letter()
+    return s
+
+  def get_value(self):
     word = ''
-    val = 0
-    for (x, y) in self._indices:
-      node = nodes_2d[y][x]
+    total = 0
+    total_mult = 1
+
+    for node in self._nodes:
       word += node.get_letter()
-      val = node.add_value(val)
+      letter_val, word_mult = node.get_value()
+      total += letter_val
+      total_mult *= word_mult
 
-    if is_word(word):
-      return (val, word) 
+    total += len_add[len(word)]
 
-    return (0, word)
+    return (total * total_mult, word)
+
+default_unused = {
+  (0, 0): False,
+  (0, 1): False,
+  (0, 2): False,
+  (0, 3): False,
+  (1, 0): False,
+  (1, 1): False,
+  (1, 2): False,
+  (1, 3): False,
+  (2, 0): False,
+  (2, 1): False,
+  (2, 2): False,
+  (2, 3): False,
+  (3, 0): False,
+  (3, 1): False,
+  (3, 2): False,
+  (3, 3): False,
+}
+
+# x, y
+"""
+
+0,0 1,0 2,0 3,0
+0,1 1,1 2,1 3,1
+0,2 1,2 2,2 3,2
+0,3 1,3 2,3 3,3
+
+"""
+
+neighbors = {
+  (0, 0): [(1, 0), (0, 1), (1, 1)],
+  (0, 1): [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2)],
+  (0, 2): [(0, 1), (1, 1), (1, 2), (1, 3), (0, 3)],
+  (0, 3): [(0, 2), (1, 2), (1, 3)],
+  (1, 0): [(0, 0), (0, 1), (1, 1), (2, 1), (2, 0)],
+  (1, 1): [(0, 0), (0, 1), (0, 2), (1, 2), (2, 2), (2, 1), (2, 0), (1, 0)],
+  (1, 2): [(0, 1), (0, 2), (0, 3), (1, 3), (2, 3), (2, 2), (2, 1), (1, 1)],
+  (1, 3): [(0, 3), (0, 2), (1, 2), (2, 2), (2, 3)],
+  (2, 0): [(1, 0), (1, 1), (2, 1), (3, 1), (3, 0)],
+  (2, 1): [(1, 0), (1, 1), (1, 2), (2, 2), (3, 2), (3, 1), (3, 0), (2, 0)],
+  (2, 2): [(1, 1), (1, 2), (1, 3), (2, 3), (3, 3), (3, 2), (3, 1), (2, 1)],
+  (2, 3): [(1, 3), (1, 2), (2, 2), (3, 2), (3, 3)],
+  (3, 0): [(2, 0), (2, 1), (3, 1)],
+  (3, 1): [(3, 0), (2, 0), (2, 1), (2, 2), (3, 2)],
+  (3, 2): [(3, 3), (2, 3), (2, 2), (2, 1), (3, 1)],
+  (3, 3): [(2, 3), (2, 2), (3, 2)], 
+}
+
+class Searcher(object):
+
+  def __init__(self, nodes_2d, checker):
+    self._nodes_2d = nodes_2d
+    self._paths = []
+    self._checker = checker
+    self._paths_considered = 0
+
+  def add_a_neighbor(self, path, unused):
+    self._paths_considered += 1
+    #if self._paths_considered % 1000:
+    #  print('Starting at {0}, considered {1}'.format(
+    #      path.first(), self._paths_considered))
+
+    cur_node = path.last_node()
+
+    neighs = neighbors[(cur_node.x, cur_node.y)]
+    for neighbor in neighs:
+      if neighbor not in unused:
+        # its already used cant use it again
+        continue
+
+      # We can add this neighbor
+      new_path = path.copy()
+      new_unused = dict(unused)
+      del new_unused[neighbor]
+      new_node = self._nodes_2d[neighbor[1]][neighbor[0]]
+      new_path.add_node(new_node)
+
+      # Check if its a valid word (eventually prefix as well)
+      word = new_path.as_word()
+      if self._checker.is_word(word) and len(word) > 1:
+        #print(word)
+        self._paths.append(new_path)
+
+      if self._checker.is_prefix(word):
+        # Continue on search if its indeed a prefix.
+        self.add_a_neighbor(new_path, new_unused)
+
+  def get_all_paths(self, start_node):
+    node = start_node
+    unused = dict(default_unused)
+    del unused[(node.x, node.y)]
+    path = Path([node])
+    self.add_a_neighbor(path, unused)
+
+    #print('Considered {0} total'.format(self._paths_considered))
+    return self._paths
 
 class BoggleBoard(object):
 
   def __init__(self, nodes_2d):
     self.nodes_2d = nodes_2d
 
-  def _add_to_paths(self, paths):
+  def _find_paths(self):
+    if not self._checker:
+      return
+
+    all_paths = []
 
     for nodes in self.nodes_2d:
       for node in nodes:
-        path = Path(node, self.nodes_2d, dict())
-        found_paths = path.search()
-        print(found_paths)
+        searcher = Searcher(self.nodes_2d, self._checker)
+        paths = searcher.get_all_paths(node)
+        all_paths.extend(paths)
+
+    return all_paths
 
   def solve(self):
-    paths = [
-      Path([(1, 1), (0, 0), (1, 0), (0, 1)]), # fade
-    ]
+    paths = self._find_paths()
+
+    print('Found {0} paths'.format(len(paths)))
+
+    #paths = [Path([(1, 1), (0, 0), (1, 0), (0, 1)])] # fade
+    word_vals = []
     for path in paths:
-      val, word = path.get_value(self.nodes_2d)
-      print('{0} - {1}'.format(word, val))
+      val, word = path.get_value()
+      word_vals.append((word, val))
+      #print('{0} - {1}'.format(word, val))
+
+    word_vals = sorted(word_vals, key=lambda x: x[1], reverse=True)
+
+    for word, val in word_vals:
+      print('{0} {1}'.format(word, val))
 
     #self._add_to_paths(paths)
+
+  def set_checker(self, checker):
+    self._checker = checker
+
+  def __str__(self):
+    lines = []
+    for nodes in self.nodes_2d:
+      s = ''
+      for node in nodes:
+        s += ' ' + str(node)
+      lines.append(s)
+    return '\n'.join(lines)
 
   @staticmethod
   def fromfile(txt):
@@ -137,18 +306,28 @@ def main():
     print('Need to have at least two arguments')
     return
 
+  one = time.time()
+
+  checker = Checker()
+  checker.load_from_words(words.words())
+
+  two = time.time()
+  #print('Loading trie took {0} s'.format(two - one))
+
   with open(sys.argv[1]) as f:
     board_txt = f.read()
 
-  print(board_txt)
   board = BoggleBoard.fromfile(board_txt)
-  for nodes in board.nodes_2d:
-    s = ''
-    for node in nodes:
-      s += ' ' + str(node)
-    print(s)
+  board.set_checker(checker)
+  print(board)
+
+  one = time.time()
 
   board.solve()
+
+  two = time.time()
+
+  print('Solving the puzzle took {0} s'.format(two - one))
 
 if __name__ == '__main__':
   main()
