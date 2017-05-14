@@ -28,6 +28,13 @@ qu=10, #
   z=10 #
 )
 
+def value_of(word):
+  w = ''
+  for letter in word:
+    w += ' {0}'.format(letter_val_d[letter])
+
+  return w
+
 color_to_boost = {
   '': '',
   'b': '2l',

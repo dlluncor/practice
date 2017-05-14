@@ -75,7 +75,7 @@ class Path(object):
       s += node.get_letter()
     return s
 
-  def get_value(self):
+  def get_value(self, debug=False):
     word = ''
     total = 0
     total_mult = 1
@@ -85,10 +85,17 @@ class Path(object):
       letter_val, word_mult = node.get_value()
       total += letter_val
       total_mult *= word_mult
+      if debug:
+        print('{0} {1}'.format(node.get_letter(), letter_val))
 
-    total += len_add[len(word)]
+    len_val = len_add[len(word)]
 
-    return (total * total_mult, word)
+    if debug:
+      print('{0}, {1}, {2}, {3}'.format(word, total, len_val, total_mult))
+
+    total = (total * total_mult) + len_val
+
+    return (total, word)
 
 # x, y
 """
@@ -178,6 +185,7 @@ class BoggleBoard(object):
 
     seen = {}
     for path in paths:
+
       val, word = path.get_value()
       if word in seen and val > seen[word]:
         seen[word] = val
