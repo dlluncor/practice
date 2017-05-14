@@ -106,10 +106,10 @@ class Searcher(object):
     self._nodes_2d = nodes_2d
     self._paths = []
     self._checker = checker
-    self._paths_considered = 0
+    #self._paths_considered = 0
 
   def add_a_neighbor(self, path, unused):
-    self._paths_considered += 1
+    #self._paths_considered += 1
     #if self._paths_considered % 1000:
     #  print('Starting at {0}, considered {1}'.format(
     #      path.first(), self._paths_considered))
