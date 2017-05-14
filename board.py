@@ -2,7 +2,6 @@ import sys
 import enchant
 import trie
 import time
-from nltk.corpus import words
 from boggle_constants import *
 
 class Checker(object):
@@ -243,6 +242,11 @@ class BoggleBoard(object):
 
     return BoggleBoard(nodes_2d)
 
+def load_wordlist():
+  with open('dictionary.csv') as f:
+    data = f.read()
+  return data.split('\r\n')
+
 def main():
   if len(sys.argv) != 2:
     print('Need to have at least two arguments')
@@ -251,7 +255,7 @@ def main():
   one = time.time()
 
   checker = Checker()
-  checker.load_from_words(words.words())
+  checker.load_from_words(load_wordlist())
 
   two = time.time()
   #print('Loading trie took {0} s'.format(two - one))
