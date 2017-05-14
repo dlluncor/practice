@@ -183,7 +183,9 @@ class BoggleBoard(object):
     return all_paths
 
   def solve(self):
+    
     paths = self._find_paths()
+    write = self._p.write
 
     seen = {}
     for path in paths:
@@ -197,7 +199,7 @@ class BoggleBoard(object):
     word_vals = [(word, val) for word, val in seen.iteritems()]
     word_vals = sorted(word_vals, key=lambda x: x[1], reverse=True)
 
-    print('Found {0} words'.format(len(word_vals)))
+    write('Found {0} words'.format(len(word_vals)))
 
     words_list = []
     total = 0
@@ -214,14 +216,17 @@ class BoggleBoard(object):
       top_100 = total
       i += 1
 
-    print('Top 100 words: {0} points'.format(top_100))
-    print('Total possible: {0} points'.format(total))
-    print('')
-    print('\n'.join(words_list))
+    write('Top 100 words: {0} points'.format(top_100))
+    write('Total possible: {0} points'.format(total))
+    write('')
+    write('\n'.join(words_list))
 
 
   def set_checker(self, checker):
     self._checker = checker
+
+  def set_printer(self, printer):
+    self._p = printer
 
   def __str__(self):
     lines = []
@@ -266,10 +271,38 @@ def load_wordlist():
     data = f.read()
   return data.split('\r\n')
 
+class Printer(object):
+
+  def __init__(self):
+    self.f = open('out.txt', 'w')
+
+  def write(self, w):
+    if not isinstance(w, basestring):
+      w = u'{0}'.format(w)
+
+    print(w)
+    self.f.write(w + '\n')
+
+  def flush(self):
+    self.f.close()
+
 def main():
-  if len(sys.argv) != 2:
-    print('Need to have at least two arguments')
+  
+  board_txt = ''
+  if len(sys.argv) == 1:
+    print('Write the board:')
+    board_txt = ''
+    for i in xrange(4):
+      board_txt += raw_input()
+      board_txt += '\n' 
+  elif len(sys.argv) == 2:
+    with open(sys.argv[1]) as f:
+      board_txt = f.read()
+  else:
+    print('Need to specify a filename or nothing')
     return
+
+  p = Printer()
 
   one = time.time()
 
@@ -279,12 +312,10 @@ def main():
   two = time.time()
   #print('Loading trie took {0} s'.format(two - one))
 
-  with open(sys.argv[1]) as f:
-    board_txt = f.read()
-
   board = BoggleBoard.fromfile(board_txt)
   board.set_checker(checker)
-  print(board)
+  board.set_printer(p)
+  p.write(board)
 
   one = time.time()
 
@@ -292,7 +323,8 @@ def main():
 
   two = time.time()
 
-  print('Solving the puzzle took {0} s'.format(two - one))
+  p.write('Solving the puzzle took {0} s'.format(two - one))
+  p.flush()
 
 if __name__ == '__main__':
   main()
