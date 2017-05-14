@@ -221,7 +221,8 @@ class BoggleBoard(object):
 
     y = 0
     for line in lines:
-
+      if not line:
+        continue
       x = 0
       nodes = []
       text_parts = line.split(' ')
@@ -235,6 +236,10 @@ class BoggleBoard(object):
 
       nodes_2d.append(nodes)
       y += 1
+
+    if y != 4:
+      print('Incorrect number of lines {0}. Need 4'.format(y))
+      sys.exit(1)
 
     return BoggleBoard(nodes_2d)
 
