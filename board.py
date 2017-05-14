@@ -122,20 +122,25 @@ class Searcher(object):
         # its already used cant use it again
         continue
 
-      # We can add this neighbor
       new_path = path.copy()
-      new_unused = dict(unused)
-      del new_unused[neighbor]
       new_node = self._nodes_2d[neighbor[1]][neighbor[0]]
       new_path.add_node(new_node)
+      word = new_path.as_word()
+
+      is_prefix = self._checker.is_prefix(word)
+      if not is_prefix:
+        continue
+
+      new_unused = dict(unused)
+      del new_unused[neighbor]
 
       # Check if its a valid word (eventually prefix as well)
-      word = new_path.as_word()
+
       if self._checker.is_word(word) and len(word) > 1:
         #print(word)
         self._paths.append(new_path)
 
-      if self._checker.is_prefix(word):
+      if is_prefix:
         # Continue on search if its indeed a prefix.
         self.add_a_neighbor(new_path, new_unused)
 
