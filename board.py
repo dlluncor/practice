@@ -22,6 +22,9 @@ class Checker(object):
 class Node(object):
 
   def __init__(self, letter, boost, x_pos, y_pos):
+    if letter == 'q':
+      letter = 'qu'
+
     self._letter = letter
     self._boost = color_to_boost[boost]
     self.x = x_pos
@@ -244,7 +247,7 @@ class BoggleBoard(object):
 
       for text_part in text_parts:
         letter = text_part[0]
-        boost = text_part[2:-1]
+        boost = text_part[1:]
         node = Node(letter, boost, x, y)
         nodes.append(node)
         x += 1
