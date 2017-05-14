@@ -48,11 +48,17 @@ class Checker(object):
   def is_word(self, word):
     return self._trie.search(word.lower())
 
+color_to_boost = {
+  '': '',
+  'b': '2l',
+  'r': '2w'
+}
+
 class Node(object):
 
   def __init__(self, letter, boost, x_pos, y_pos):
     self._letter = letter
-    self._boost = boost
+    self._boost = color_to_boost[boost]
     self.x = x_pos
     self.y = y_pos
     self._letter_val = letter_val_d[letter]
@@ -249,16 +255,21 @@ class BoggleBoard(object):
   def solve(self):
     paths = self._find_paths()
 
-    print('Found {0} paths'.format(len(paths)))
-
     #paths = [Path([(1, 1), (0, 0), (1, 0), (0, 1)])] # fade
-    word_vals = []
+
+    seen = {}
     for path in paths:
       val, word = path.get_value()
-      word_vals.append((word, val))
-      #print('{0} - {1}'.format(word, val))
+      if word in seen and val > seen[word]:
+        seen[word] = val
+      else:
+        seen[word] = val
+
+    word_vals = [(word, val) for word, val in seen.iteritems()]
 
     word_vals = sorted(word_vals, key=lambda x: x[1], reverse=True)
+
+    print('Found {0} words'.format(len(word_vals)))
 
     for word, val in word_vals:
       print('{0} {1}'.format(word, val))
