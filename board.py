@@ -252,7 +252,7 @@ class BoggleBoard(object):
 
       for text_part in text_parts:
         letter = text_part[0]
-        boost = text_part[1:]
+        boost = text_part[1:].strip()
         node = Node(letter, boost, x, y)
         nodes.append(node)
         x += 1
