@@ -2,3 +2,5 @@ venv
 a.out
 *.pyc
 dictionary.csv
+out
+out.txt
