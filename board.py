@@ -196,7 +196,7 @@ class BoggleBoard(object):
       else:
         seen[word] = val
 
-    word_vals = [(word, val) for word, val in seen.iteritems()]
+    word_vals = [(word, val) for word, val in seen.items()]
     word_vals = sorted(word_vals, key=lambda x: x[1], reverse=True)
 
     write('Found {0} words'.format(len(word_vals)))
@@ -267,9 +267,14 @@ class BoggleBoard(object):
     return BoggleBoard(nodes_2d)
 
 def load_wordlist():
-  with open('dictionary.csv') as f:
+  with open('dictionary.csv', 'rb') as f:
     data = f.read()
-  return data.split('\r\n')
+
+  s = data.decode('utf-8')
+
+  words = s.split('\r\n')
+  assert(len(words) > 100)
+  return words
 
 class Printer(object):
 
@@ -277,7 +282,7 @@ class Printer(object):
     self.f = open('out.txt', 'w')
 
   def write(self, w):
-    if not isinstance(w, basestring):
+    if not isinstance(w, str):
       w = u'{0}'.format(w)
 
     print(w)
@@ -286,14 +291,19 @@ class Printer(object):
   def flush(self):
     self.f.close()
 
+def _run_asserts(checker):
+  # type: (Checker) -> None
+  assert(checker.is_word('hello'))
+
+
 def main():
   
   board_txt = ''
   if len(sys.argv) == 1:
     print('Write the board:')
     board_txt = ''
-    for i in xrange(4):
-      board_txt += raw_input()
+    for i in range(4):
+      board_txt += input()
       board_txt += '\n' 
   elif len(sys.argv) == 2:
     with open(sys.argv[1]) as f:
@@ -308,6 +318,8 @@ def main():
 
   checker = Checker()
   checker.load_from_words(load_wordlist())
+
+  _run_asserts(checker)
 
   two = time.time()
   #print('Loading trie took {0} s'.format(two - one))

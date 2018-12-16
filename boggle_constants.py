@@ -101,7 +101,7 @@ neighbors = {
   (3, 3): [(2, 3), (2, 2), (3, 2)], 
 }
 
-for k, neighs in neighbors.iteritems():
+for k, neighs in neighbors.items():
   for neigh in neighs:
     if k == neigh:
       print('Repeat. Invalid neighbor for key {0}'.format(k))
