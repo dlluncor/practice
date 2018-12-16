@@ -1,27 +1,33 @@
 import sys
-import enchant
 import trie
 import time
 from boggle_constants import *
 
+from typing import Text, List, Any, Tuple, Dict, Optional
+
 class Checker(object):
 
   def __init__(self):
+    # type: () -> None
     self._trie = trie.Trie()
 
   def load_from_words(self, words_list):
+    # type: (List[Text]) -> None
     for word in words_list:
       self._trie.insert(word.lower())
 
   def is_prefix(self, word):
+    # type: (Text) -> bool
     return self._trie.startsWith(word.lower())
 
   def is_word(self, word):
+    # type: (Text) -> bool
     return self._trie.search(word.lower())
 
 class Node(object):
 
   def __init__(self, letter, boost, x_pos, y_pos):
+    # type: (Text, Text, int, int) -> None
     if letter == 'q':
       letter = 'qu'
 
@@ -32,9 +38,11 @@ class Node(object):
     self._letter_val = letter_val_d[letter]
 
   def get_letter(self):
+    # type: () -> Text
     return self._letter
 
   def get_value(self):
+    # type: () -> Tuple[int, int]
     b = self._boost
     word_mult = 1
     letter_mult = 1
@@ -51,33 +59,41 @@ class Node(object):
     return self._letter_val * letter_mult, word_mult
 
   def __str__(self):
+    # type: () -> str
     return '{0} - {1}. ({2}, {3})'.format(
         self._letter, self._boost, self.x, self.y)
 
 class Path(object):
 
   def __init__(self, nodes):
+    # type: (List[Node]) -> None
     self._nodes = nodes
 
   def add_node(self, node):
+    # type: (Node) -> None
     self._nodes.append(node)
 
   def first(self):
+    # type: () -> Node
     return self._nodes[0]
 
   def last_node(self):
+    # type: () -> Node
     return self._nodes[-1]
 
   def copy(self):
+    # type: () -> Path
     return Path(list(self._nodes))
 
   def as_word(self):
+    # type: () -> Text
     s = ''
     for node in self._nodes:
       s += node.get_letter()
     return s
 
   def get_value(self, debug=False):
+    # type: (bool) -> Tuple[int, Text]
     word = ''
     total = 0
     total_mult = 1
@@ -112,12 +128,14 @@ class Path(object):
 class Searcher(object):
 
   def __init__(self, nodes_2d, checker):
+    # type: (List[List[Node]], Checker) -> None
     self._nodes_2d = nodes_2d
-    self._paths = []
+    self._paths = [] # type: List[Path]
     self._checker = checker
     #self._paths_considered = 0
 
   def add_a_neighbor(self, path, unused):
+    # type: (Path, Dict) -> None
     #self._paths_considered += 1
     #if self._paths_considered % 1000:
     #  print('Starting at {0}, considered {1}'.format(
@@ -154,6 +172,7 @@ class Searcher(object):
         self.add_a_neighbor(new_path, new_unused)
 
   def get_all_paths(self, start_node):
+    # type: (Node) -> List[Path]
     node = start_node
     unused = dict(default_unused)
     del unused[(node.x, node.y)]
@@ -166,11 +185,13 @@ class Searcher(object):
 class BoggleBoard(object):
 
   def __init__(self, nodes_2d):
+    # type: (List[List[Node]]) -> None
     self.nodes_2d = nodes_2d
 
   def _find_paths(self):
+    # type: () -> Optional[List[Path]]
     if not self._checker:
-      return
+      return None
 
     all_paths = []
 
@@ -183,11 +204,17 @@ class BoggleBoard(object):
     return all_paths
 
   def solve(self):
-    
+    # type: () -> None
+
     paths = self._find_paths()
+
+    if not paths:
+      print(u'Could not solve because no paths were found')
+      return None
+
     write = self._p.write
 
-    seen = {}
+    seen = {} # type: Dict[Text, int]
     for path in paths:
 
       val, word = path.get_value()
@@ -223,12 +250,15 @@ class BoggleBoard(object):
 
 
   def set_checker(self, checker):
+    # type: (Checker) -> None
     self._checker = checker
 
   def set_printer(self, printer):
+    # type: (Printer) -> None
     self._p = printer
 
   def __str__(self):
+    # type: () -> str
     lines = []
     for nodes in self.nodes_2d:
       s = ''
@@ -239,6 +269,7 @@ class BoggleBoard(object):
 
   @staticmethod
   def fromfile(txt):
+    # type: (Text) -> BoggleBoard
     lines = txt.split('\n')
     nodes_2d = []
 
@@ -267,6 +298,7 @@ class BoggleBoard(object):
     return BoggleBoard(nodes_2d)
 
 def load_wordlist():
+  # type: () -> List[Text]
   with open('dictionary.csv', 'rb') as f:
     data = f.read()
 
@@ -279,9 +311,11 @@ def load_wordlist():
 class Printer(object):
 
   def __init__(self):
+    # type: () -> None
     self.f = open('out.txt', 'w')
 
   def write(self, w):
+    # type: (Any) -> None
     if not isinstance(w, str):
       w = u'{0}'.format(w)
 
@@ -289,6 +323,7 @@ class Printer(object):
     self.f.write(w + '\n')
 
   def flush(self):
+    # type: () -> None
     self.f.close()
 
 def _run_asserts(checker):
@@ -297,7 +332,8 @@ def _run_asserts(checker):
 
 
 def main():
-  
+  # type: () -> None
+
   board_txt = ''
   if len(sys.argv) == 1:
     print('Write the board:')

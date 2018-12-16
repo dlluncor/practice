@@ -1,3 +1,6 @@
+import sys
+
+from typing import Text
 
 letter_val_d = dict(
   a=1, #
@@ -29,6 +32,7 @@ qu=10, #
 )
 
 def value_of(word):
+  # type: (Text) -> Text
   w = ''
   for letter in word:
     w += ' {0}'.format(letter_val_d[letter])
