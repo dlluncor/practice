@@ -26,15 +26,15 @@ class Checker(object):
 
 class Node(object):
 
-  def __init__(self, letter, boost, x_pos, y_pos):
+  def __init__(self, letter, boost, x, y):
     # type: (Text, Text, int, int) -> None
     if letter == 'q':
       letter = 'qu'
 
     self._letter = letter
     self._boost = color_to_boost[boost]
-    self.x = x_pos
-    self.y = y_pos
+    self.x = x
+    self.y = y
     self._letter_val = letter_val_d[letter]
 
   def get_letter(self):
@@ -268,8 +268,41 @@ class BoggleBoard(object):
     return '\n'.join(lines)
 
   @staticmethod
-  def fromfile(txt):
-    # type: (Text) -> BoggleBoard
+  def _get_nodes_no_spaces(txt):
+    # type: (Text) -> List[List[Node]]
+    lines = txt.split('\n') 
+    nodes_2d = []
+
+    y = 0
+    for line in lines:
+      line = line.strip()
+      nodes = []
+      if len(line) == 4:
+        for i in range(4):
+          node = Node(line[i], boost='', x=i, y=y)
+          nodes.append(node)
+      elif len(line) == 8:
+        for i in range(4):
+          node = Node(line[i*2], line[i*2 + 1], x=i, y=y)
+          nodes.append(node)
+      else:
+        print('Incorrect number of characters {} on line {}'.format(len(line), y))
+        sys.exit(1)
+
+      y += 1
+      nodes_2d.append(nodes)
+
+    return nodes_2d
+
+  @staticmethod
+  def fromfile(txt, with_spaces):
+    # type: (Text, bool) -> BoggleBoard
+    # with_spaces indicates that we should parse the file with spaces
+    # otherwise, parse as if there are no spaces
+    if not with_spaces:
+      nodes_2d = BoggleBoard._get_nodes_no_spaces(txt)
+      return BoggleBoard(nodes_2d)
+
     lines = txt.split('\n')
     nodes_2d = []
 
@@ -360,7 +393,7 @@ def main():
   two = time.time()
   #print('Loading trie took {0} s'.format(two - one))
 
-  board = BoggleBoard.fromfile(board_txt)
+  board = BoggleBoard.fromfile(board_txt, with_spaces=False)
   board.set_checker(checker)
   board.set_printer(p)
   p.write(board)

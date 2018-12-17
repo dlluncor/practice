@@ -44,7 +44,7 @@ color_to_boost = {
   'b': '2l',
   'r': '2w',
   'g': '3l',
-  'go': '3w'
+  'G': '3w'
 }
 
 len_add = {
